@@ -1,6 +1,8 @@
 [package]
 name = "rustpanel"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
+web-view = "0.7.3"
+x11 = "2.18"
