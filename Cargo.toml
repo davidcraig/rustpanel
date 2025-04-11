@@ -6,3 +6,5 @@ edition = "2021"
 [dependencies]
 web-view = "0.7.3"
 x11 = "2.18"
+gtk = "0.18"
+glib = "0.10"
