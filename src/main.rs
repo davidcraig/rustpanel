@@ -14,10 +14,17 @@ fn get_template_path(monitor_num: i32) -> PathBuf {
     path
 }
 
+fn get_template_dir() -> String {
+    let mut path = dirs::home_dir().unwrap_or_default();
+    path.push(".rustpanel");
+    path.push("templates");
+    format!("file://{}", path.to_string_lossy())
+}
+
 fn main() {
     gtk::init().unwrap();
 
-    let app = Application::new(Some("com.example.background"), Default::default());
+    let app = Application::new(Some("com.davidcraig.rustpanel"), Default::default());
     
     app.connect_activate(move |app| {
         if let Some(display) = Display::default() {
@@ -67,8 +74,11 @@ fn main() {
                         "<html><body style='background: transparent !important;'><div style='color: white;'>Monitor {}</div></body></html>",
                         monitor_num
                     ));
+
+                // Get base URL for loading local resources
+                let base_url = get_template_dir();
                 
-                webview.load_html(&html, None);
+                webview.load_html(&html, Some(&base_url));
                 window.add(&webview);
                 window.show_all();
             }
