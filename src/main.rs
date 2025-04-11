@@ -3,6 +3,16 @@ use gtk::{Application, ApplicationWindow};
 use gtk::gdk::{Display, WindowTypeHint};
 use webkit2gtk::{WebView, WebContext, traits::WebViewExt};
 use std::fs;
+use std::path::PathBuf;
+use dirs;
+
+fn get_template_path(monitor_num: i32) -> PathBuf {
+    let mut path = dirs::home_dir().unwrap_or_default();
+    path.push(".rustpanel");
+    path.push("templates");
+    path.push(format!("monitor{}.html", monitor_num));
+    path
+}
 
 fn main() {
     gtk::init().unwrap();
@@ -21,17 +31,40 @@ fn main() {
                 window.set_decorated(false);
                 window.set_app_paintable(true);
                 window.set_type_hint(WindowTypeHint::Desktop);
+                
+                // Enable compositing
+                window.set_visual(Some(&screen.rgba_visual().unwrap()));
+                window.set_app_paintable(true);
+                
+                // Position and size
                 window.move_(rect.x, rect.y);
                 window.set_default_size(rect.width, rect.height);
                 
+                // Make background transparent
+                window.connect_screen_changed(|window, _| {
+                    if let Some(screen) = window.screen() {
+                        if let Some(visual) = screen.rgba_visual() {
+                            window.set_visual(Some(&visual));
+                        }
+                    }
+                });
+                
+                window.connect_draw(|_, cr| {
+                    cr.set_source_rgba(0.0, 0.0, 0.0, 0.0);
+                    cr.set_operator(cairo::Operator::Source);
+                    cr.paint().unwrap();
+                    Inhibit(false)
+                });
+                
+                // Create WebView with transparent background
                 let context = WebContext::default().unwrap();
                 let webview = WebView::with_context(&context);
                 
-                // Load HTML content from template file
-                let template_path = format!("src/templates/monitor{}.html", monitor_num);
+                // Load HTML content from template file in user's home directory
+                let template_path = get_template_path(monitor_num);
                 let html = fs::read_to_string(&template_path)
                     .unwrap_or_else(|_| format!(
-                        "<html><body><div style='color: white;'>Monitor {}</div></body></html>",
+                        "<html><body style='background: transparent !important;'><div style='color: white;'>Monitor {}</div></body></html>",
                         monitor_num
                     ));
                 
