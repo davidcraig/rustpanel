@@ -1,42 +1,73 @@
-use gtk::gdk::WindowTypeHint;
 use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow};
-use glib::timeout_add_seconds;
-use glib::Continue;
-
-mod widgets;
+use gtk::gdk::{Display, WindowTypeHint};
+use webkit2gtk::{WebView, WebContext, traits::WebViewExt};
 
 fn main() {
-    let app = Application::new(Some("com.example.rust-desktop-widgets"), Default::default());
+    gtk::init().unwrap();
 
-    app.connect_activate(|app| {
-        let window = ApplicationWindow::new(app);
-        window.set_title("Rust Desktop Widgets");
-        window.set_default_size(800, 600);
-        window.set_decorated(false); // Non-interactive window
-        window.set_keep_above(true); // Keep window above other windows
-        window.set_app_paintable(true); // Allow custom drawing
-
-        // Set window type hint to behave like a desktop widget
-        if let Some(gdk_window) = window.window() {
-            gdk_window.set_type_hint(WindowTypeHint::Desktop);
+    let app = Application::new(Some("com.davidcraig.rustpanel"), Default::default());
+    
+    app.connect_activate(move |app| {
+        // Get primary display
+        if let Some(display) = Display::default() {
+            let screen = display.default_screen();
+            let n_monitors = screen.n_monitors();
+            
+            // Create a window for each monitor
+            for monitor_num in 0..n_monitors {
+                let rect = screen.monitor_geometry(monitor_num);
+                
+                // Create window
+                let window = ApplicationWindow::new(app);
+                window.set_decorated(false);
+                window.set_app_paintable(true);
+                
+                // Set window type to be below other windows but above wallpaper
+                window.set_type_hint(WindowTypeHint::Desktop);
+                
+                // Position and size window to fill monitor
+                window.move_(rect.x, rect.y);
+                window.set_default_size(rect.width, rect.height);
+                
+                // Create WebView
+                let context = WebContext::default().unwrap();
+                let webview = WebView::with_context(&context);
+                
+                // Load HTML content
+                let html = format!(r#"
+                    <html>
+                    <head>
+                        <style>
+                            body {{
+                                margin: 0;
+                                padding: 0;
+                                width: 100vw;
+                                height: 100vh;
+                                background-color: rgba(0, 0, 0, 0);
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                            }}
+                            #content {{
+                                color: white;
+                                font-size: 24px;
+                                text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        <div id="content">Monitor {}</div>
+                    </body>
+                    </html>
+                "#, monitor_num);
+                
+                webview.load_html(&html, None);
+                window.add(&webview);
+                window.show_all();
+            }
         }
-
-        window.set_accept_focus(false); // Make the window non-interactive
-
-        // Initialize widgets
-        widgets::initialize_widgets(&window);
-
-        window.show_all();
     });
 
-    // Run the application
     app.run();
-
-    // Keep the application running in the background
-    timeout_add_seconds(1, || {
-        // Update widget display logic here
-        widgets::update_widgets();
-        Continue(true)
-    });
 }
