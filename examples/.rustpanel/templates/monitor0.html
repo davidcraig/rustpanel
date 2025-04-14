@@ -2,8 +2,10 @@
 <html>
 <head>
     <style>
-        * {
-            background: transparent !important;
+        body {
+            /* background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important; */
         }
         html, body {
             margin: 0;
@@ -13,17 +15,89 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: transparent !important;
+            font-family: "Ubuntu", "Hack";
         }
-        #content {
-            color: white;
-            font-size: 24px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            background: transparent !important;
+        body {
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
+            background-color: purple !important;
+            color: white !important;
+            transition: background-image 500ms ease-in-out;
         }
+
+        #app {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            width: 100%;
+            height: calc(100% - 20px);
+            margin-top: 20px;
+            gap: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+            grid-template-areas: "top-left top top-right"
+                                 "left center right"
+                                 "left center right"
+                                 "left center right"
+                                 "bottom-left bottom bottom-right";
+        }
+
+        #clock-app {
+            grid-area: top-right;
+        }
+
+        .time {
+                font-size: 4em;
+                color: white;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                text-align: right;
+            }
     </style>
 </head>
 <body>
-    <div id="content">Primary Monitor</div>
+    <div id="app">
+    </div>
+
+
+    <template id="clock">
+        <div class="time">Time</div>
+    </template>
+
+    <script>
+        const wallpapers = [
+           `wallpaper.jpg`,
+        ]
+
+        const clockTemplate = document.getElementById('clock');
+        const clockDiv = document.createElement('div');
+        clockDiv.id = "clock-app";
+        clockDiv.appendChild(clockTemplate.content.cloneNode(true));
+        document.getElementById('app').appendChild(clockDiv);
+        const timeDiv = document.querySelector('#clock-app > .time');
+        const updateClock = () => {
+            const now = new Date();
+            timeDiv.textContent = now.toLocaleTimeString();
+        };
+        const updateWallpapers = () => {
+            var wallpaper = wallpapers[Math.floor(Math.random()*wallpapers.length)];
+            console.log(wallpaper);
+            document.body.style.backgroundImage = `url(file:///home/sniper/.rustpanel/templates/${wallpaper})`;
+        }
+
+        // 1 Second Ticks
+        setInterval(() => {
+            updateClock();
+        }, 1000);
+
+        // 1 Minute Ticks
+        setInterval(() => {
+            updateWallpapers();
+        }, 60000);
+
+        updateClock(); // Initial call to set the time immediately
+        updateWallpapers(); // Initial call to set the wallpapers immediately
+    </script>
 </body>
 </html>
